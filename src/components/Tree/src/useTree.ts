@@ -8,7 +8,7 @@ import { forEach } from '/@/utils/helper/treeHelper';
 
 export function useTree(
   treeDataRef: Ref<TreeDataItem[]>,
-  getReplaceFields: ComputedRef<ReplaceFields>
+  getReplaceFields: ComputedRef<ReplaceFields>,
 ) {
   function getAllKeys(list?: TreeDataItem[]) {
     const keys: string[] = [];
@@ -22,6 +22,45 @@ export function useTree(
       const children = node[childrenField];
       if (children && children.length) {
         keys.push(...(getAllKeys(children) as string[]));
+      }
+    }
+    return keys as Keys;
+  }
+  // get keys that can be checked and selected
+  function getEnabledKeys(list?: TreeDataItem[]) {
+    const keys: string[] = [];
+    const treeData = list || unref(treeDataRef);
+    const { key: keyField, children: childrenField } = unref(getReplaceFields);
+    if (!childrenField || !keyField) return keys;
+
+    for (let index = 0; index < treeData.length; index++) {
+      const node = treeData[index];
+      node.disabled !== true && node.selectable !== false && keys.push(node[keyField]!);
+      const children = node[childrenField];
+      if (children && children.length) {
+        keys.push(...(getEnabledKeys(children) as string[]));
+      }
+    }
+    return keys as Keys;
+  }
+
+  function getChildrenKeys(nodeKey: string | number, list?: TreeDataItem[]): Keys {
+    const keys: Keys = [];
+    const treeData = list || unref(treeDataRef);
+    const { key: keyField, children: childrenField } = unref(getReplaceFields);
+    if (!childrenField || !keyField) return keys;
+    for (let index = 0; index < treeData.length; index++) {
+      const node = treeData[index];
+      const children = node[childrenField];
+      if (nodeKey === node[keyField]) {
+        keys.push(node[keyField]!);
+        if (children && children.length) {
+          keys.push(...(getAllKeys(children) as string[]));
+        }
+      } else {
+        if (children && children.length) {
+          keys.push(...getChildrenKeys(nodeKey, children));
+        }
       }
     }
     return keys as Keys;
@@ -146,5 +185,7 @@ export function useTree(
     filterByLevel,
     updateNodeByKey,
     getAllKeys,
+    getChildrenKeys,
+    getEnabledKeys,
   };
 }

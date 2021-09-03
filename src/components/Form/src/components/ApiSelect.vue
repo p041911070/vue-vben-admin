@@ -7,7 +7,7 @@
     v-model:value="state"
   >
     <template #[item]="data" v-for="item in Object.keys($slots)">
-      <slot :name="item" v-bind="data"></slot>
+      <slot :name="item" v-bind="data || {}"></slot>
     </template>
     <template #suffixIcon v-if="loading">
       <LoadingOutlined spin />
@@ -100,7 +100,7 @@
         () => {
           !unref(isFirstLoad) && fetch();
         },
-        { deep: true }
+        { deep: true },
       );
 
       async function fetch() {
@@ -134,7 +134,7 @@
       }
 
       function emitChange() {
-        emit('options-change', unref(options));
+        emit('options-change', unref(getOptions));
       }
 
       function handleChange(_, ...args) {
