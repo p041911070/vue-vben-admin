@@ -76,7 +76,12 @@ export function useFormValues({
       }
       // Remove spaces
       if (isString(value)) {
-        value = value.trim();
+        // remove params from URL
+        if (value === '') {
+          value = undefined;
+        } else {
+          value = value.trim();
+        }
       }
       if (!tryDeconstructArray(key, value, res) && !tryDeconstructObject(key, value, res)) {
         // 没有解构成功的，按原样赋值
@@ -122,7 +127,16 @@ export function useFormValues({
     const schemas = unref(getSchema);
     const obj: Recordable = {};
     schemas.forEach((item) => {
-      const { defaultValue } = item;
+      const { defaultValue, defaultValueObj } = item;
+      const fieldKeys = Object.keys(defaultValueObj || {});
+      if (fieldKeys.length) {
+        fieldKeys.map((field) => {
+          obj[field] = defaultValueObj![field];
+          if (formModel[field] === undefined) {
+            formModel[field] = defaultValueObj![field];
+          }
+        });
+      }
       if (!isNullOrUnDef(defaultValue)) {
         obj[item.field] = defaultValue;
 
